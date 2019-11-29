@@ -23,13 +23,48 @@ async def sendMatchResponse(msg, winner, score0, score1, p1, p2):
     embed.add_field(name = getPlayerMention(p2), value = score1)
     await msg.channel.send(embed=embed)
 
-async def sendMatchesResponse(msg, results):
+async def sendMatchesResponse(msg, results, p1, p2):
+    # CALCULATING WINS
     wins = [0, 0, 0]
     for match_result in results:
         wins[match_result[0]] += 1
     desc_string = "Wins: " + str(wins[0]) + "-" + str(wins[1]) + "-" + str(wins[2])
-    embed = discord.Embed(title="Series Results", description=desc_string)
+
+    # GETTING WINNER
+    winner = 2
+    if wins[0] > wins[1]:
+        winner = 0
+    elif wins[1] > wins[0]:
+        winner = 1
+    
+    # AVERAGE SCORES
+    averages = [0, 0]
+    for match_result in results:
+        averages[0] += match_result[1]
+        averages[1] += match_result[2]
+    averages[0] /= len(results)
+    averages[1] /= len(results)
+
+    ### MAIN REPORTING EMBED
+    embed = discord.Embed(title="Series Results", color=getColor(winner), description=desc_string)
     await msg.channel.send(embed=embed)
+
+    ### PLAYER STATS EMBED
+
+    ## PLAYER 0 EMBED
+    embedp0 = discord.Embed(title="Player 0", color = getColor(0), description=getPlayerMention(p1))
+    embedp0.add_field(name="W-L", value=(str(wins[0]) + "-" + str(wins[1])), inline=True) # WINS - LOSSES
+    embedp0.add_field(name="Average Score", value=averages[0], inline=True) # AVG SCORE
+    # SEND
+    await msg.channel.send(embed=embedp0)
+    
+    ## PLAYER 1 EMBED
+    embedp1 = discord.Embed(title="Player 1", color = getColor(1), description=getPlayerMention(p2))
+    embedp1.add_field(name="W-L", value=(str(wins[1]) + "-" + str(wins[0])), inline=False) # WINS - LOSSES
+    embedp1.add_field(name="Average Score", value=averages[1], inline=True) # AVG SCORE
+    # SEND
+    await msg.channel.send(embed=embedp1)
+    
 
 async def sendResponse(msg, resp):
     embed = discord.Embed(description=resp)
@@ -186,7 +221,7 @@ async def on_message(message):
             await sendResponse(message, "10 matches max right now.")
             return
         results = playMatches(p1, p2, num_matches)
-        await sendMatchesResponse(message, results)
+        await sendMatchesResponse(message, results, p1, p2)
         clearReplays()
     else:
         await sendResponse(message, "Unknown command.")
