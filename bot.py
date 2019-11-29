@@ -102,6 +102,12 @@ def validChannel(message):
 def getColor(player):
     return colors[player]
 
+def clearReplays():
+    wd = os.path.dirname(os.path.realpath(__file__)) + "/replays"
+    call = "find . ! -name 'latest_replay.log' -type f -exec rm -f {} +"
+    subprocess.Popen(call, shell = True, cwd=wd)
+
+
 # BOT CODE
 
 load_dotenv()
@@ -168,6 +174,7 @@ async def on_message(message):
         winner, score0, score1 = playMatch(p1, p2)
         await sendReplay(message, latest_replay, getResponseReplayFilename(p1, p2))
         await sendMatchResponse(message, winner, score0, score1, p1, p2)
+        clearReplays()
     elif args[0] == "playmult":
         if(len(args) != 4):
             await sendResponse(message, "playmult needs 3 args: p1 p2 num_matches")
@@ -180,6 +187,7 @@ async def on_message(message):
             return
         results = playMatches(p1, p2, num_matches)
         await sendMatchesResponse(message, results)
+        clearReplays()
     else:
         await sendResponse(message, "Unknown command.")
 
