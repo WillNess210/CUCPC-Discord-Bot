@@ -22,6 +22,7 @@ message_queue = []
 config = configparser.RawConfigParser()
 config.read('discord_bot.properties')
 leaderboard_channel_id = int(config.get('bot', 'leaderboard_channel_id'))
+print_leaderboard_every_seconds = 3600/60
 # HELPER FUNCTIONS
 
 async def sendMatchResponse(msg, winner, score0, score1, p1, p2):
@@ -184,7 +185,6 @@ class MyClient(discord.Client):
         self.elo_system = elopy.Implementation()
         self.should_refresh_elo = True
         self.last_update = 0
-        self.latest_upload = time.time()
         if not os.path.isfile(path_to_Elo):
             print("No elo file found. Loading fresh")
             self.loadFreshElos()
@@ -265,13 +265,13 @@ class MyClient(discord.Client):
         await self.wait_until_ready()
         while True:
             await self.playNextMatch()
-            if self.latest_upload > self.last_update:
-                await self.handleEloMatches()
-                if(len(self.elo_match_queue) == 0):
+            await self.handleEloMatches()
+            if(len(self.elo_match_queue) == 0):
+                if(self.last_update + print_leaderboard_every_seconds < time.time()):
                     self.last_update = time.time()
                     await self.printEloLeaderboard()
-                    self.saveEloSystemToEloFile()
-            await asyncio.sleep(2)
+                self.saveEloSystemToEloFile()
+            await asyncio.sleep(3)
 
     async def handleEloMatches(self):
         if(len(self.elo_match_queue) == 0):
@@ -280,7 +280,7 @@ class MyClient(discord.Client):
             for player in playerss:
                 players.append(player[0])
             num_players = len(players)
-            for k in range(10):
+            for k in range(1):
                 for i in range(num_players):
                     for j in range(i + 1, num_players):
                         self.addMatchElo(players[i], players[j])
@@ -388,7 +388,7 @@ class MyClient(discord.Client):
         for player_data in self.elo_system.getRatingList():
             elos.append([player_data[0], player_data[1]])
         sorted_players = sorted(elos, key=lambda tup: tup[1], reverse=True)
-        to_send_string = ""
+        to_send_string = "Bot Leaderboard: \n"
         rank = 1
         for player in sorted_players:
             to_send_string += str(rank) + ". " + getPlayerMention(player[0]) + " - " + str(player[1]) + "\n"
