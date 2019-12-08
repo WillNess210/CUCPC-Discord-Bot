@@ -158,7 +158,7 @@ def clearReplays():
 
 
 def getPlayers():
-    return os.listdir(os.getcwd + "/bots")
+    return os.listdir(os.getcwd() + "/bots")
 
 # BOT CODE
 
