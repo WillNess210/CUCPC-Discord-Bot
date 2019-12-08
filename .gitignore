@@ -9,3 +9,15 @@ replays/*
 
 # ignore uploaded bots
 bots/*
+
+# ignore .out files
+*.out
+
+# ignore elo storage file
+elos.json
+
+# bot properties file
+discord_bot.properties
+
+# pycache
+__pycache__/*
