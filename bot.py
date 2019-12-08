@@ -22,7 +22,7 @@ message_queue = []
 config = configparser.RawConfigParser()
 config.read('discord_bot.properties')
 leaderboard_channel_id = int(config.get('bot', 'leaderboard_channel_id'))
-print_leaderboard_every_seconds = 3600/60
+print_leaderboard_every_seconds = int(config.get('bot', 'leaderboard_refresh_time'))
 # HELPER FUNCTIONS
 
 async def sendMatchResponse(msg, winner, score0, score1, p1, p2):
