@@ -349,8 +349,15 @@ class MyClient(discord.Client):
             return
         self.elo_system.recordMatch(p0, p1, winner=win)
 
+    def playerInEloSystem(self, name):
+        for player in self.elo_system.players:
+            if player.name == name:
+                return True
+        return False
+
     def addEloPlayer(self, name):
-        self.elo_system.removePlayer(name)
+        if self.playerInEloSystem(name):
+            self.elo_system.removePlayer(name)
         self.elo_system.addPlayer(name, rating=starting_elo)
         print("Adding " + name)
 
