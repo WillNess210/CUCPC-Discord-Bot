@@ -152,6 +152,9 @@ def validChannel(message):
 def getColor(player):
     return colors[player]
 
+def checkValidBot(player):
+    return os.path.isfile(bots_stored + "/" + player + "/" + bot_foldername + "/bot_config.properties")
+
 def removeBot(player):
     player = getStrippedPlayerName(player)
     wd = os.path.dirname(os.path.realpath(__file__)) + "/bots/" + player
@@ -227,11 +230,14 @@ class MyClient(discord.Client):
             file_data = downloadBot(att)
             writeBot(authorid, file_data)
             unzipBot(authorid)
+            if not checkValidBot(authorid):
+                removeBot(authorid)
+                await sendResponse(message, "Invalid upload. Ensure that your bot_config.properties is in the root directory of your .zip")
+                return
             await sendResponse(message, "Bot uploaded.")
             # set new bot elo in elosystem
             self.addEloPlayer(authorid)
             self.saveEloSystemToEloFile()
-            self.latest_upload = time.time()
             return
         elif args[0] == "play":
             authorid = getStrippedPlayerName(message.author.mention)
