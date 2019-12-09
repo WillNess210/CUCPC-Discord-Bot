@@ -152,6 +152,12 @@ def validChannel(message):
 def getColor(player):
     return colors[player]
 
+def removeBot(player):
+    player = getStrippedPlayerName(player)
+    wd = os.path.dirname(os.path.realpath(__file__)) + "/bots/" + player
+    call = "rm " + wd + " -r"
+    subprocess.Popen(call, shell = True, cwd=wd)
+
 def clearReplays():
     wd = os.path.dirname(os.path.realpath(__file__)) + "/replays"
     call = "find . ! -name 'latest_replay.log' -type f -exec rm -f {} +"
@@ -207,6 +213,8 @@ class MyClient(discord.Client):
         args = msg_content.split()
         if args[0] == "uploadbot":
             authorid = getStrippedPlayerName(message.author.mention)
+            if os.path.isdir("bots/" + authorid):
+                removeBot(authorid)
             atts = message.attachments
             if(len(atts) != 1):
                 await sendResponse(message, "uploadbot needs 1 message attachment.")
@@ -258,6 +266,8 @@ class MyClient(discord.Client):
                 return
             self.addMatchMult(message, p1, p2, num_matches)
             return
+        elif args[0] == "lb":
+            await self.printEloLeaderboard()
         else:
             await sendResponse(message, "Unknown command.")
     
@@ -383,7 +393,6 @@ class MyClient(discord.Client):
             json.dump(elos, outfile)
 
     async def printEloLeaderboard(self):
-        print("T1")
         elos = []
         for player_data in self.elo_system.getRatingList():
             elos.append([player_data[0], player_data[1]])
