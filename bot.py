@@ -220,7 +220,7 @@ class MyClient(discord.Client):
 
     #@client.event
     async def on_message(self, message):
-        if message.author == client.user or not validChannel(message):
+        if message.author == client.user or (not validChannel(message) and message.channel.type != discord.ChannelType.private):
             return
         msg_content = message.content.lower()
         if len(msg_content) == 0 or msg_content[0] != command_symbol:
