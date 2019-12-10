@@ -156,6 +156,7 @@ def checkValidBot(player):
     return os.path.isfile(bots_stored + "/" + player + "/" + bot_foldername + "/bot_config.properties")
 
 def removeBot(player):
+    print("removing " + player)
     player = getStrippedPlayerName(player)
     wd = os.path.dirname(os.path.realpath(__file__)) + "/bots/" + player
     call = "rm " + wd + " -r"
