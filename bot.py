@@ -174,6 +174,10 @@ def removeBot(player, myclient):
     subprocess.Popen(call, shell = True, cwd=wd)
     return mq, emq
 
+def removeSterr():
+    call = "rm *.out"
+    subprocess.Popen(call, shell = True)
+
 def clearReplays():
     wd = os.path.dirname(os.path.realpath(__file__)) + "/replays"
     call = "find . ! -name 'latest_replay.log' -type f -exec rm -f {} +"
@@ -207,6 +211,7 @@ class MyClient(discord.Client):
         self.elo_system = elopy.Implementation()
         self.should_refresh_elo = True
         self.last_update = 0
+        self.last_change = time.time()
         if not os.path.isfile(path_to_Elo):
             print("No elo file found. Loading fresh")
             self.loadFreshElos()
@@ -257,6 +262,8 @@ class MyClient(discord.Client):
             # set new bot elo in elosystem
             self.addEloPlayer(authorid)
             self.saveEloSystemToEloFile()
+            self.addEloSetForPlayer(authorid, 5)
+            self.last_change = time.time()
             return
         elif args[0] == "play":
             authorid = getStrippedPlayerName(message.author.mention)
@@ -302,15 +309,16 @@ class MyClient(discord.Client):
             await self.playNextMatch()
             await self.handleEloMatches()
             if(len(self.elo_match_queue) == 0):
-                if(self.last_update + print_leaderboard_every_seconds < time.time()):
+                if(self.last_change > self.last_update and self.last_update + print_leaderboard_every_seconds < time.time()):
                     self.last_update = time.time()
                     await self.printEloLeaderboard()
                 self.saveEloSystemToEloFile()
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)
 
     async def handleEloMatches(self):
         if(len(self.elo_match_queue) == 0):
-            playerss = self.elo_system.getRatingList()
+            return
+            '''playerss = self.elo_system.getRatingList()
             players = []
             for player in playerss:
                 players.append(player[0])
@@ -318,7 +326,7 @@ class MyClient(discord.Client):
             for k in range(1):
                 for i in range(num_players):
                     for j in range(i + 1, num_players):
-                        self.addMatchElo(players[i], players[j])
+                        self.addMatchElo(players[i], players[j])'''
         
         match = self.elo_match_queue[0]
         self.elo_match_queue = self.elo_match_queue[1:len(self.elo_match_queue)]
@@ -333,7 +341,15 @@ class MyClient(discord.Client):
         elif winner == 1:
             self.addMatchResult(p0, p1, p1)
         clearReplays()
+        removeSterr()
 
+    def addEloSetForPlayer(self, p0, num_player_each):
+        self.removePlayerFromQueues(p0)
+        players = getPlayers()
+        for i in range(num_player_each):
+            for player in players:
+                if player != p0:
+                    self.addMatchElo(p0, player)
 
     def addMatchElo(self, p0, p1):
         this_match = {}
@@ -373,10 +389,12 @@ class MyClient(discord.Client):
             await sendReplay(message, latest_replay, getResponseReplayFilename(p0, p1))
             await sendMatchResponse(message, winner, score_0, score_1, p0, p1)
             clearReplays()
+            removeSterr()
         elif (match["type"] == "mult"):
             results = playMatches(p0, p1, match["num_matches"])
             await sendMatchesResponse(message, results, p0, p1)
             clearReplays()
+            removeSterr()
         return True
     
     def addMatchResult(self, p0, p1, win):
@@ -405,6 +423,7 @@ class MyClient(discord.Client):
         players = getPlayers()
         for player in players:
             self.addEloPlayer(player)
+            self.addEloSetForPlayer(player, 3)
         self.saveEloSystemToEloFile()
 
     def loadEloFileToEloSystem(self):
@@ -422,6 +441,18 @@ class MyClient(discord.Client):
         with open(path_to_Elo, 'w') as outfile:
             json.dump(elos, outfile)
     
+    def removePlayerFromQueues(self, name):
+        mq = []
+        emq = []
+        for m in self.match_queue:
+            if m["p0"] != name and m["p1"] != name:
+                mq.append(m)
+        self.match_queue = mq
+        for m in self.elo_match_queue:
+            if m["p0"] != name and m["p1"] != name:
+                emq.append(m)
+        self.elo_match_queue = emq
+
     def removePlayerFromEloFile(self, name):
         elos = {}
         for player_data in self.elo_system.getRatingList():
