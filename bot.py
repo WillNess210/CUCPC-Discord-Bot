@@ -176,7 +176,7 @@ def removeBot(player, myclient):
 
 def removeSterr():
     call = "rm *.out"
-    subprocess.Popen(call, shell = True)
+    subprocess.Popen(call, shell = True, stdout=DEVNULL, stderr=subprocess.STDOUT)
 
 def clearReplays():
     wd = os.path.dirname(os.path.realpath(__file__)) + "/replays"
