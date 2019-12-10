@@ -155,12 +155,24 @@ def getColor(player):
 def checkValidBot(player):
     return os.path.isfile(bots_stored + "/" + player + "/" + bot_foldername + "/bot_config.properties")
 
-def removeBot(player):
+def removeMatchesFrom(mq, name):
+    rq = []
+    for match in mq:
+        if not match["p0"] == name and not match["p1"] == name:
+            rq.append(match)
+    return rq
+
+def removeBot(player, myclient):
     print("removing " + player)
+    # remove all matches from queue
+    mq = removeMatchesFrom(myclient.match_queue, player)
+    emq = removeMatchesFrom(myclient.elo_match_queue, player)
+    # removing from filesystem
     player = getStrippedPlayerName(player)
     wd = os.path.dirname(os.path.realpath(__file__)) + "/bots/" + player
     call = "rm " + wd + " -r"
     subprocess.Popen(call, shell = True, cwd=wd)
+    return mq, emq
 
 def clearReplays():
     wd = os.path.dirname(os.path.realpath(__file__)) + "/replays"
@@ -217,8 +229,6 @@ class MyClient(discord.Client):
         args = msg_content.split()
         if args[0] == "uploadbot":
             authorid = getStrippedPlayerName(message.author.mention)
-            if os.path.isdir("bots/" + authorid):
-                removeBot(authorid)
             atts = message.attachments
             if(len(atts) != 1):
                 await sendResponse(message, "uploadbot needs 1 message attachment.")
@@ -227,12 +237,20 @@ class MyClient(discord.Client):
             if(att.filename[-4:] != ".zip"):
                 await sendResponse(message, "attachment must be a zip file.")
                 return 
+            if os.path.isdir("bots/" + authorid):
+                mq, emq = removeBot(authorid, self)
+                self.match_queue = mq
+                self.elo_match_queue = emq
             print("received '" + att.filename + "' from " + authorid + ".")
             file_data = downloadBot(att)
             writeBot(authorid, file_data)
             unzipBot(authorid)
             if not checkValidBot(authorid):
-                removeBot(authorid)
+                mq, emq = removeBot(authorid, self)
+                self.match_queue = mq
+                self.elo_match_queue = emq
+                self.removePlayerFromEloFile(authorid)
+                self.removeEloPlayer(authorid)
                 await sendResponse(message, "Invalid upload. Ensure that your bot_config.properties is in the root directory of your .zip")
                 return
             await sendResponse(message, "Bot uploaded.")
@@ -372,6 +390,10 @@ class MyClient(discord.Client):
                 return True
         return False
 
+    def removeEloPlayer(self, name):
+        if self.playerInEloSystem(name):
+            self.elo_system.removePlayer(name)
+
     def addEloPlayer(self, name):
         if self.playerInEloSystem(name):
             self.elo_system.removePlayer(name)
@@ -396,6 +418,17 @@ class MyClient(discord.Client):
         elos = {}
         for player_data in self.elo_system.getRatingList():
             elos[player_data[0]] = player_data[1]
+        with open(path_to_Elo, 'w') as outfile:
+            json.dump(elos, outfile)
+    
+    def removePlayerFromEloFile(self, name):
+        elos = {}
+        for player_data in self.elo_system.getRatingList():
+            if player_data[0] != name:
+                elos[player_data[0]] = player_data[1]
+                print("adding " + player_data[0])
+            else:
+                print("withholding")
         with open(path_to_Elo, 'w') as outfile:
             json.dump(elos, outfile)
 
