@@ -292,7 +292,7 @@ class MyClient(discord.Client):
             self.addMatchMult(message, p1, p2, num_matches)
             return
         elif args[0] == "lb":
-            await self.printEloLeaderboard()
+            await self.printEloLeaderboard(message.channel.id)
         else:
             await sendResponse(message, "Unknown command.")
     
@@ -432,7 +432,7 @@ class MyClient(discord.Client):
         with open(path_to_Elo, 'w') as outfile:
             json.dump(elos, outfile)
 
-    async def printEloLeaderboard(self):
+    async def printEloLeaderboard(self, chnl = leaderboard_channel_id):
         elos = []
         for player_data in self.elo_system.getRatingList():
             elos.append([player_data[0], player_data[1]])
@@ -444,7 +444,7 @@ class MyClient(discord.Client):
             rank += 1
         if(len(to_send_string) > 0):
             print(to_send_string)
-            channel = client.get_channel(leaderboard_channel_id)
+            channel = client.get_channel(chnl)
             embed = discord.Embed(description=to_send_string)
             await channel.send(embed=embed)
         
