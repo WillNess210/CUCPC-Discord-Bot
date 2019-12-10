@@ -16,8 +16,9 @@ bots/*
 # ignore elo storage file
 elos.json
 
-# bot properties file
+# properties files
 discord_bot.properties
+engine_config.properties
 
 # pycache
 __pycache__/*
