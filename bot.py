@@ -319,11 +319,12 @@ class MyClient(discord.Client):
                 for i in range(num_players):
                     for j in range(i + 1, num_players):
                         self.addMatchElo(players[i], players[j])
-        print("Playing elo match. " + str(len(self.elo_match_queue)) + " left.")
+        
         match = self.elo_match_queue[0]
         self.elo_match_queue = self.elo_match_queue[1:len(self.elo_match_queue)]
         p0 = match["p0"]
         p1 = match["p1"]
+        print("Playing elo match. " + p0 + " vs " + p1 + ". " + str(len(self.elo_match_queue)) + " left.")
         winner, score_0, score_1 = playMatch(p0, p1)
         if winner == 2:
             self.addMatchResult(p0, p1, 2)
@@ -361,11 +362,11 @@ class MyClient(discord.Client):
     async def playNextMatch(self):
         if len(self.match_queue) == 0:
             return False
-        print("Playing match.")
         match = self.match_queue[0]
         self.match_queue = self.match_queue[1:len(self.match_queue)]
         p0 = match["p0"]
         p1 = match["p1"]
+        print("Playing match. " + str(p0) + " vs " + str(p1))
         message = match["msg"]
         if (match["type"] == "print"):
             winner, score_0, score_1 = playMatch(p0, p1)
