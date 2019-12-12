@@ -301,11 +301,11 @@ class MyClient(discord.Client):
         elif args[0] == "lb":
             await self.printEloLeaderboard(message.channel.id)
         elif args[0] == 'eloset':
-            if(len(args) > 1):
+            if(len(args) > 2):
                 await sendResponse(message, "eloset must be blank or 1 integer param")
                 return
             num = 3
-            if(len(args) == 1):
+            if(len(args) == 2):
                 num = int(args[1])
                 if num > 10:
                     await sendResponse(message, "error, max of 10")
