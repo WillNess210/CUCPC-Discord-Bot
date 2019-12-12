@@ -155,6 +155,20 @@ def getColor(player):
 def checkValidBot(player):
     return os.path.isfile(bots_stored + "/" + player + "/" + bot_foldername + "/bot_config.properties")
 
+def getPropertyFromPlayer(property, player):
+    CONFIG_PATH = bots_stored + "/" + player + "/" + bot_foldername + "/bot_config.properties"
+    with open(CONFIG_PATH, 'r') as f:
+        config_string = '[dummy_section]\n' + f.read()
+    config = configparser.ConfigParser()
+    config.read_string(config_string)
+    return config.get('dummy_section', property)
+
+def getPlayerLanguage(player):
+    return int(getPropertyFromPlayer('bot_language', player))
+
+def getPlayerMainFile(player):
+    return getPropertyFromPlayer('main_file', player)
+
 def removeMatchesFrom(mq, name):
     rq = []
     for match in mq:
@@ -183,6 +197,9 @@ def clearReplays():
     call = "find . ! -name 'latest_replay.log' -type f -exec rm -f {} +"
     subprocess.Popen(call, shell = True, cwd=wd)
 
+def chmodxFile(fl):
+    call = "chmod +x " + fl
+    subprocess.Popen(call, shell = True, stdout=DEVNULL, stderr=subprocess.STDOUT)
 
 def getPlayers():
     return os.listdir(os.getcwd() + "/bots")
@@ -259,6 +276,11 @@ class MyClient(discord.Client):
                 await sendResponse(message, "Invalid upload. Ensure that your bot_config.properties is in the root directory of your .zip")
                 return
             await sendResponse(message, "Bot uploaded.")
+            # if c++, chmod the main file
+            if getPlayerLanguage(authorid) == 1:
+                main_file = bots_stored + "/" + authorid + "/" + bot_foldername + "/" + getPlayerMainFile(authorid)
+                chmodxFile(main_file)
+
             # set new bot elo in elosystem
             self.addEloPlayer(authorid)
             self.saveEloSystemToEloFile()
@@ -310,6 +332,7 @@ class MyClient(discord.Client):
                 if num > 10:
                     await sendResponse(message, "error, max of 10")
             self.addEloSet(num)
+            await sendResponse(message, "Added " + str(num) + " Elo matches for each player.")
         else:
             await sendResponse(message, "Unknown command.")
     
@@ -323,7 +346,7 @@ class MyClient(discord.Client):
                     self.last_update = time.time()
                     await self.printEloLeaderboard()
                 self.saveEloSystemToEloFile()
-            await asyncio.sleep(1)
+            await asyncio.sleep(2)
 
     async def handleEloMatches(self):
         if(len(self.elo_match_queue) == 0):
