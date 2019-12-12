@@ -300,6 +300,16 @@ class MyClient(discord.Client):
             return
         elif args[0] == "lb":
             await self.printEloLeaderboard(message.channel.id)
+        elif args[0] == 'eloset':
+            if(len(args) > 1):
+                await sendResponse(message, "eloset must be blank or 1 integer param")
+                return
+            num = 3
+            if(len(args) == 1):
+                num = int(args[1])
+                if num > 10:
+                    await sendResponse(message, "error, max of 10")
+            self.addEloSet(num)
         else:
             await sendResponse(message, "Unknown command.")
     
@@ -419,6 +429,11 @@ class MyClient(discord.Client):
         self.elo_system.addPlayer(name, rating=starting_elo)
         print("Adding " + name)
 
+    def addEloSet(self, num = 3):
+        players = getPlayers()
+        for player in players:
+            self.addEloSetForPlayer(player, num)
+    
     def loadFreshElos(self):
         players = getPlayers()
         for player in players:
