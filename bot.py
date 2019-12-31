@@ -28,14 +28,14 @@ print_leaderboard_every_seconds = int(config.get('bot', 'leaderboard_refresh_tim
 async def sendMatchResponse(msg, winner, score0, score1, p1, p2):
     winner_string = "Winner: "
     if winner == 0:
-        winner_string += p1
+        winner_string += getUsernameFromID(p1)
     elif winner == 1:
-        winner_string += p2
+        winner_string += getUsernameFromID(p2)
     elif winner == 2:
         winner_string += "tie"
     embed = discord.Embed(title="Match Results", color=getColor(winner), description=winner_string)
-    embed.add_field(name = getPlayerMention(p1), value = score0)
-    embed.add_field(name = getPlayerMention(p2), value = score1)
+    embed.add_field(name = getUsernameFromID(p1), value = score0)
+    embed.add_field(name = getUsernameFromID(p2), value = score1)
     await msg.channel.send(embed=embed)
 
 async def sendMatchesResponse(msg, results, p1, p2):
@@ -519,7 +519,13 @@ class MyClient(discord.Client):
             await channel.send(embed=embed)
         
         
-
+def getUsernameFromID(cid):
+    global client
+    for guild in client.guilds:
+        for member in guild.members:
+            if str(member.id) == str(cid):
+                return member.display_name
+    return cid
 
 client = MyClient()
 
