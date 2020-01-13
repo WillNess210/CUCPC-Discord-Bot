@@ -28,7 +28,6 @@ print_leaderboard_every_seconds = int(config.get('bot', 'leaderboard_refresh_tim
 users_that_should_have_bots = ["188407516844130305"]
 last_remind_time = -1
 remind_every_seconds = 43200 # currently 12 hours
-funny_addon_messages = ["charging your paypal account $200.", "emailing your mom to tell on you.", "getting you expelled from CU.", "DDoS'ing you.", "adding your email to spam email lists.", "deleting your R6 account.", "hacking your GitHub to delete all of your repos.", "changing your grades in Canvas to F's.", "emailing all of your professors that you are going to drop their class.", "ordering 50 uber eats orders to your apartment using your credit card."]
 remind_channel_id = int(config.get('bot', 'remind_channel_id'))
 
 # HELPER FUNCTIONS
@@ -345,13 +344,13 @@ class MyClient(discord.Client):
             await sendResponse(message, "Unknown command.")
 
     async def remindUsersToUpload(self):
-        global last_remind_time, remind_every_seconds, remind_channel_id, funny_addon_messages, users_that_should_have_bot
+        global last_remind_time, remind_every_seconds, remind_channel_id, users_that_should_have_bot
         if(time.time() > last_remind_time + remind_every_seconds): # 12 hours
             print("it's been 12 hours or the bot has restarted. annoying those who haven't uploaded")
             for userid in users_that_should_have_bots:
                 if not doesBotExist(userid):
                     channel = client.get_channel(remind_channel_id)
-                    await channel.send("Hey <@" + userid + ">. You still haven't uploaded a bot! I am now " + random.choice(funny_addon_messages))
+                    await channel.send("Hey <@" + userid + ">. You still haven't uploaded a bot!")
             if last_remind_time == -1:
                 last_remind_time = time.time()
             last_remind_time += remind_every_seconds
